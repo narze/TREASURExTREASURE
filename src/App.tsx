@@ -1,18 +1,48 @@
-import { Component, createResource } from 'solid-js';
+import { Component, createResource, onCleanup } from 'solid-js';
 
 import styles from './App.module.css';
 import QrScanner from 'qr-scanner';
 import { createEffect, createSignal } from 'solid-js';
 
+const codes = {
+  '1': atob('T3Bu'),
+  '2': atob('Tg=='),
+  '3': atob('RQ=='),
+  '4': atob('VA=='),
+  '5': atob('Vw=='),
+  '6': atob('Tw=='),
+  '7': atob('Ug=='),
+  '8': atob('Sw=='),
+} as Record<string, string>;
+
 let videoRef: HTMLVideoElement;
 
 function parseData(qr: string) {
   const d = qr.split('mint?jwt=');
-  console.log({ d });
-  if (d.length == 2) {
-    const jwt = parseJwt(d[1]);
-    console.log({ jwt });
+  // console.log({ d });
+  if (d.length != 2) {
+    alert('QR CODE BAD, SAD YOUNG BOY');
+    return;
   }
+
+  const jwt = parseJwt(d[1]);
+  // console.log({ jwt });
+
+  if (!jwt.season) {
+    alert('QR CODE BAD, SAD YOUNG BOY.');
+    return;
+  }
+
+  if (!jwt.tokenId) {
+    alert('QR CODE BAD, SAD YOUNG BOY..');
+    return;
+  }
+
+  alert(
+    `You got ${
+      codes[String(jwt.tokenId)] ?? `Unknown ID ${jwt.tokenId}`
+    } (Season: ${jwt.season})`
+  );
 }
 
 function parseJwt(token: string) {
@@ -43,12 +73,14 @@ const App: Component = () => {
       },
       {
         preferredCamera:
-          // '7b1d19dd3625d8defe4a41f48d64ef3e8c930c4bc038e8154c3eb4b913292cf1',
-          'e1d4cfef1e54845623ea53cb5d592d454c1cb2644095f41dc7593a425c749c4f',
+          '7b1d19dd3625d8defe4a41f48d64ef3e8c930c4bc038e8154c3eb4b913292cf1',
+        // 'e1d4cfef1e54845623ea53cb5d592d454c1cb2644095f41dc7593a425c749c4f',
       }
     );
 
     scanner.start();
+
+    onCleanup(() => scanner.stop());
   });
 
   return (
@@ -61,7 +93,7 @@ const App: Component = () => {
           // console.log(camera);
           return <li>{camera.label}</li>;
         })}
-      <video ref={videoRef}></video>
+      <video ref={videoRef} width="100%"></video>
     </div>
   );
 };
